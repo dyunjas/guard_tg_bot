@@ -1,6 +1,7 @@
 import telebot
 from telebot import types
 import time
+import json
 
 TOKEN = "7379713109:AAHMSMSc_aUT7lhPvx2H7eMB_S0z5F6XIrs"
 bot = telebot.TeleBot(TOKEN)
@@ -9,30 +10,25 @@ bot = telebot.TeleBot(TOKEN)
 mute_list = []
 ban_list = []
 counter = {}
-mute_data = {}
+user_dic = {}
 
+
+@bot.message_handler(commands=['set_rules'])
+def start(message):
+    text = message.text
+    with open("rules.txt", "a", encoding='utf-8') as f:
+        f.write(text)
+    with open("rules.txt", "r", encoding='utf-8') as f:
+        data = f.readlines()
+    with open("rules.txt", "w", encoding='utf-8') as f:
+        for line in data:
+            if line.strip() != '/set_rules':
+                f.write(line)
 
 
 @bot.message_handler(content_types=['new_chat_members'])
 def greeting(message):
-    bot.reply_to(message, text='''⚠️правила группы:
-🧸Бан - блокировка без возможности возвращения в чат. 
-🕖Мут - блокировка на определённое время. Время выбирает администратор чата по своему усмотрению. 
-🚩Мут/бан - администратор группы выбирает, что именно делать с нарушителем по своему усмотрению. 
-
-🚫 Запрещено:
-
-🫦 1. Картинки/стикеры 18+ ( на первый раз (в количестве не более 1 картинки) - предупредительный мут на две недели, второй раз - бан) 
-
-‼️ 2. Спам/флуд - мут/бан
-
-❌ 3. Токсичность/ оскорбления/агрессия - мут
-
-👀 4. Реклама других пабликов с ссылкой на канал, чаты, магазины, боты - мут/бан. 
-
-🧑‍✈️5. Политика - мут/бан
-
-🧂6. Что либо, отсылающее к запрещенным веществам - мут/бан''')
+    send_rules(message)
 
 
 @bot.message_handler(commands=['shanty'])
@@ -58,41 +54,16 @@ def start(message):
 Всех люблю💙''', reply_markup=markup)
 
 
+
 @bot.message_handler(commands=['rules'])
 def start(message):
-    bot.send_message(message.chat.id, '''⚠️правила группы:
-🧸Бан - блокировка без возможности возвращения в чат. 
-🕖Мут - блокировка на определённое время. Время выбирает администратор чата по своему усмотрению. 
-🚩Мут/бан - администратор группы выбирает, что именно делать с нарушителем по своему усмотрению. 
+    send_rules(message)
 
-🚫 Запрещено:
-
-🫦 1. Картинки/стикеры 18+ ( на первый раз (в количестве не более 1 картинки) - предупредительный мут на две недели, второй раз - бан) 
-
-‼️ 2. Спам/флуд - мут/бан
-
-❌ 3. Токсичность/ оскорбления/агрессия - мут
-
-👀 4. Реклама других пабликов с ссылкой на канал, чаты, магазины, боты - мут/бан. 
-
-🧑‍✈️5. Политика - мут/бан
-
-🧂6. Что либо, отсылающее к запрещенным веществам - мут/бан''')
 
 
 @bot.message_handler(commands=['commands'])
 def start(message):
-    bot.send_message(message.chat.id, '''Основные команды чата:
-• /info - информация обо мне
-• /shanty - где найти shanty?
-• /commands - команды
-• /rules - правила чата
-
-Команды для администраторов:
-• /mute - замутить котёнка
-• /unmute - рузмутить котёнка
-• /ban - заблокировать котёнка
-• /unban - разблокировать котёнка''')
+    send_commands(message)
 
 
 @bot.callback_query_handler(func=lambda call: call.data == 'commands')
@@ -112,24 +83,7 @@ def like2_handler(call):
 
 @bot.callback_query_handler(func=lambda call: call.data == 'rules')
 def like111_handler(call):
-    bot.send_message(call.message.chat.id, '''⚠️правила группы:
-🧸Бан - блокировка без возможности возвращения в чат. 
-🕖Мут - блокировка на определённое время. Время выбирает администратор чата по своему усмотрению. 
-🚩Мут/бан - администратор группы выбирает, что именно делать с нарушителем по своему усмотрению. 
-
-🚫 Запрещено:
-
-🫦 1. Картинки/стикеры 18+ ( на первый раз (в количестве не более 1 картинки) - предупредительный мут на две недели, второй раз - бан) 
-
-‼️ 2. Спам/флуд - мут/бан
-
-❌ 3. Токсичность/ оскорбления/агрессия - мут
-
-👀 4. Реклама других пабликов с ссылкой на канал, чаты, магазины, боты - мут/бан. 
-
-🧑‍✈️5. Политика - мут/бан
-
-🧂6. Что либо, отсылающее к запрещенным веществам - мут/бан''')
+    send_rules(call.message)
 
 
 
@@ -145,6 +99,13 @@ def ban_user(message):
             user_status = bot.get_chat_member(chat_id, user_id).status
             if user_status == 'administrator' or user_status == 'creator':
                 bot.reply_to(message, f"К сожалению котёнок @{message.reply_to_message.from_user.username} является частью персонала группы.")
+                with open('users_id.txt') as f:
+                    if str(message.reply_to_message.from_user.id) not in f.read():
+                        data = f.readlines()
+                        with open('users_id.txt', 'w') as modified:
+                            modified.write(message.reply_to_message.from_user.username + ':' + message.reply_to_message.from_user.id + '\n' + data)
+                    else:
+                        bot.send_message(message, '')
             else:
                 bot.kick_chat_member(chat_id, user_id)
                 bot.reply_to(message, f"Котёнок @{message.reply_to_message.from_user.username} был забанен.")
@@ -245,6 +206,13 @@ def mute_user(message):
                                 bot.restrict_chat_member(chat_id, user_id, until_date=time.time() + min * int(mute_count[1]))
                                 bot.reply_to(message, f"Котёнок @{message.reply_to_message.from_user.username} замучен на {mute_count[1]} минут.")
                                 mutes_id_add(message)
+                                with open('users_id.txt') as f:
+                                    if str(message.reply_to_message.from_user.id) not in f.read():
+                                        data = f.readlines()
+                                        with open('users_id.txt', 'w') as modified:
+                                            modified.write(message.reply_to_message.from_user.username + ':' + message.reply_to_message.from_user.id + '\n' + data)
+                                    else:
+                                        bot.send_message(message, '')
                                 mute_list.append(message.from_user.id)
                             elif mute_count[2] == 'hour':
                                 bot.restrict_chat_member(chat_id, user_id, until_date=time.time() + hour * int(mute_count[1]))
@@ -337,6 +305,34 @@ def bans_id_add(message):
         data = original.read()
     with open('bans.txt', 'w') as modified:
         modified.write(user_id + '\n' + data)
+
+
+def send_rules(message):
+    f = open('rules.txt', 'r', encoding='utf-8')
+    rules_content = f.read()
+    bot.reply_to(message, rules_content)
+    f.close()
+
+
+def send_commands(message):
+    bot.send_message(message.chat.id, '''Основные команды чата:
+    • /info - информация обо мне
+    • /shanty - где найти shanty?
+    • /commands - команды
+    • /rules - правила чата
+
+    Команды для администраторов:
+    • /mute - замутить котёнка
+    • /unmute - рузмутить котёнка
+    • /ban - заблокировать котёнка
+    • /unban - разблокировать котёнка''')
+
+def file_to_dic():
+    with open('users_id.txt', encoding='utf-8') as file: #Читаем файл
+        lines = file.read().splitlines() # read().splitlines() - чтобы небыло пустых строк
+    for line in lines: # Проходимся по каждой строчке
+        key,value = line.split(': ') # Разделяем каждую строку по двоеточии(в key будет - пицца, в value - 01)
+        user_dic.update({key:value})	 # Добавляем в словарь
 
 
 
