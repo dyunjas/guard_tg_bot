@@ -210,7 +210,7 @@ def mute_user(message):
                                     if str(message.reply_to_message.from_user.id) not in f.read():
                                         data = f.readlines()
                                         with open('users_id.txt', 'w') as modified:
-                                            modified.write(message.reply_to_message.from_user.username + ':' + message.reply_to_message.from_user.id + '\n' + data)
+                                            modified.write(str(message.reply_to_message.from_user.username) + ':' + str(message.reply_to_message.from_user.id) + '\n' + data)
                                     else:
                                         bot.send_message(message, '')
                                 mute_list.append(message.from_user.id)
