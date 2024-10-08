@@ -1,7 +1,8 @@
 import telebot
 from telebot import types
 import time
-import json
+from types import GenericAlias
+
 
 TOKEN = "7379713109:AAHMSMSc_aUT7lhPvx2H7eMB_S0z5F6XIrs"
 bot = telebot.TeleBot(TOKEN)
@@ -15,16 +16,43 @@ user_dic = {}
 
 @bot.message_handler(commands=['set_rules'])
 def start(message):
-    text = message.text
-    with open("rules.txt", "a", encoding='utf-8') as f:
-        f.write(text)
-    with open("rules.txt", "r", encoding='utf-8') as f:
-        data = f.readlines()
-    with open("rules.txt", "w", encoding='utf-8') as f:
-        for line in data:
-            if line.strip() != '/set_rules':
-                f.write(line)
+    chat_id = message.chat.id
+    user_id = message.from_user.id
+    user_status = bot.get_chat_member(chat_id, user_id).status
+    if user_status == 'administrator' or user_status == 'creator':
+        text = message.text
+        with open("rules.txt", "a", encoding='utf-8') as f:
+            f.write(text)
+        with open("rules.txt", "r", encoding='utf-8') as f:
+            data = f.readlines()
+        with open("rules.txt", "w", encoding='utf-8') as f:
+            for line in data:
+                if line.strip() != '/set_rules':
+                    f.write(line)
+        bot.send_message(message.chat.id, 'Для изменения правил группы используйте команду [ /edit_rules ].')
+    else:
+        bot.reply_to(message, 'К сожалению у вас нет прав для использования данной команды.')
 
+
+@bot.message_handler(commands=['edit_rules'])
+def start(message):
+    chat_id = message.chat.id
+    user_id = message.from_user.id
+    user_status = bot.get_chat_member(chat_id, user_id).status
+    if user_status == 'administrator' or user_status == 'creator':
+        with open('rules.txt', 'r+') as f:
+            f.truncate(0)
+        text = message.text
+        with open("rules.txt", "a", encoding='utf-8') as f:
+            f.write(text)
+        with open("rules.txt", "r", encoding='utf-8') as f:
+            data = f.readlines()
+        with open("rules.txt", "w", encoding='utf-8') as f:
+            for line in data:
+                if line.strip() != '/edit_rules':
+                    f.write(line)
+    else:
+        bot.reply_to(message, 'К сожалению у вас нет прав для использования данной команды.')
 
 @bot.message_handler(content_types=['new_chat_members'])
 def greeting(message):
@@ -99,13 +127,6 @@ def ban_user(message):
             user_status = bot.get_chat_member(chat_id, user_id).status
             if user_status == 'administrator' or user_status == 'creator':
                 bot.reply_to(message, f"К сожалению котёнок @{message.reply_to_message.from_user.username} является частью персонала группы.")
-                with open('users_id.txt') as f:
-                    if str(message.reply_to_message.from_user.id) not in f.read():
-                        data = f.readlines()
-                        with open('users_id.txt', 'w') as modified:
-                            modified.write(message.reply_to_message.from_user.username + ':' + message.reply_to_message.from_user.id + '\n' + data)
-                    else:
-                        bot.send_message(message, '')
             else:
                 bot.kick_chat_member(chat_id, user_id)
                 bot.reply_to(message, f"Котёнок @{message.reply_to_message.from_user.username} был забанен.")
@@ -206,13 +227,6 @@ def mute_user(message):
                                 bot.restrict_chat_member(chat_id, user_id, until_date=time.time() + min * int(mute_count[1]))
                                 bot.reply_to(message, f"Котёнок @{message.reply_to_message.from_user.username} замучен на {mute_count[1]} минут.")
                                 mutes_id_add(message)
-                                with open('users_id.txt') as f:
-                                    if str(message.reply_to_message.from_user.id) not in f.read():
-                                        data = f.readlines()
-                                        with open('users_id.txt', 'w') as modified:
-                                            modified.write(str(message.reply_to_message.from_user.username) + ':' + str(message.reply_to_message.from_user.id) + '\n' + data)
-                                    else:
-                                        bot.send_message(message, '')
                                 mute_list.append(message.from_user.id)
                             elif mute_count[2] == 'hour':
                                 bot.restrict_chat_member(chat_id, user_id, until_date=time.time() + hour * int(mute_count[1]))
@@ -234,24 +248,53 @@ def mute_user(message):
             else:
                 bot.reply_to(message, "Эта команда должна быть использована в ответ на сообщение котёнка, которого вы хотите замутить.")
         else:
-            bot.reply_to(message,"У вас нет прав для данной команды.")
+            bot.reply_to(message,"У вас нет прав для использования данной команды.")
     elif user_id in mute_list:
         mute_list.remove(message.from_user.id)
         bot.reply_to(message, 'Произошла ошибка, попробуйте ещё раз.')
 
 
+@bot.message_handler(commands=['mute_user'])
+def mute_user(message):
+    text_mute = message.text
+    mute_count = text_mute.split(' ')
+    duration = 60
+    min = duration * 1
+    hour = duration * 60
+    day = duration * 1440
+    week = duration * 10080
+    d = {}
+    with open("users_id.txt") as file:
+        for line in file:
+            key, *value = line.split()
+            d[key] = value
+    start_with_id = str(d[str(mute_count[1])])
+    don_user_id = str(start_with_id[2] + start_with_id[3:])
+    result_user_id = int(don_user_id[:9])
+    user_id = GenericAlias(list, (int, result_user_id))
+    try:
+        if mute_count[3] == 'min':
+            bot.restrict_chat_member(message.chat.id, user_id, until_date=time.time() + min * int(mute_count[2]))
+            print(type(dict[mute_count[1]]))
+            bot.reply_to(message,f"Котёнок {dict[mute_count[1]]} замучен на {mute_count[2]} минут.")
+            mute_list.append(dict[mute_count[2]])
+        else:
+            bot.reply_to(message.chat.id, result_user_id)
+    except:
+        bot.reply_to(message.chat.id, str(user_id))
 
 
 @bot.message_handler(commands=['mute_list'])
 def mute_user(message):
     try:
         if len(mute_list) == 0:
-            bot.reply_to(message, '')
+            bot.reply_to(message, '0')
             return
         else:
             bot.reply_to(message, mute_list)
     except:
         bot.reply_to(message, 'список пуст')
+
 
 @bot.message_handler(regexp="http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+")
 def delete_message(message):
@@ -263,6 +306,7 @@ def delete_message(message):
         bot.restrict_chat_member(chat_id, user_id, until_date=time.time() + 300)
         bot.send_message(message.chat.id, f'Котёнок , ссылки в чате запрещены.')
         mute_list.append(message.from_user.id)
+        mutes_id_add(message)
     elif user_status == 'administrator' or user_status == 'creator':
         bot.send_message(message.chat.id, '')
 
@@ -308,11 +352,13 @@ def bans_id_add(message):
 
 
 def send_rules(message):
-    f = open('rules.txt', 'r', encoding='utf-8')
-    rules_content = f.read()
-    bot.reply_to(message, rules_content)
-    f.close()
-
+    try:
+        f = open('rules.txt', 'r', encoding='utf-8')
+        rules_content = f.read()
+        bot.reply_to(message, rules_content)
+        f.close()
+    except:
+        bot.reply_to(message, 'Котёнок, правила для этого чата ещё не установлены.')
 
 def send_commands(message):
     bot.send_message(message.chat.id, '''Основные команды чата:
@@ -321,19 +367,29 @@ def send_commands(message):
     • /commands - команды
     • /rules - правила чата
 
-    Команды для администраторов:
+Команды для администраторов:
     • /mute - замутить котёнка
     • /unmute - рузмутить котёнка
     • /ban - заблокировать котёнка
     • /unban - разблокировать котёнка''')
 
-def file_to_dic():
-    with open('users_id.txt', encoding='utf-8') as file: #Читаем файл
-        lines = file.read().splitlines() # read().splitlines() - чтобы небыло пустых строк
-    for line in lines: # Проходимся по каждой строчке
-        key,value = line.split(': ') # Разделяем каждую строку по двоеточии(в key будет - пицца, в value - 01)
-        user_dic.update({key:value})	 # Добавляем в словарь
+def file_to_dict():
+    file = open("users_id.txt")
+    onstring = file.read().split("\n")[:-1]
+    dict = dict()
+    for item in onstring:
+        key = item.split(" ")[0]
+        value = item.split(" ")[1:]
+        dict[key] = value
+    file.close()
 
+
+def users_id_add(message):
+    user_id = message.reply_to_message.from_user.id
+    with open('bans.txt', 'r') as original:
+        data = original.read()
+    with open('bans.txt', 'w') as modified:
+        modified.write(user_id + '\n' + data)
 
 
 if __name__ == '__main__':
