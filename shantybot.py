@@ -284,6 +284,28 @@ def mute_user(message):
         bot.reply_to(message.chat.id, str(user_id))
 
 
+@bot.message_handler(commands=['ban_user'])
+def ban_user(message):
+    text_ban = message.text
+    ban_count = text_ban.split(' ')
+    d = {}
+    with open("users_id.txt") as file:
+        for line in file:
+            key, *value = line.split()
+            d[key] = value
+    start_with_id = str(d[str(ban_count[1])])
+    don_user_id = str(start_with_id[2] + start_with_id[3:])
+    result_user_id = int(don_user_id[:9])
+    user_id = GenericAlias(list, (int, result_user_id))
+    try:
+        bot.kick_chat_member(message.chat.id, user_id)
+                bot.reply_to(message, f"Котёнок {ban_count[1]} был забанен.")
+                ban_list.append(user_id)
+                bans_id_add(message)
+    except:
+        bot.reply_to(message.chat.id, str(user_id))
+
+
 @bot.message_handler(commands=['mute_list'])
 def mute_user(message):
     try:
