@@ -51,8 +51,22 @@ def start(message):
             for line in data:
                 if line.strip() != '/edit_rules':
                     f.write(line)
+                    bot.send_message(message.chat.id, 'Правила чата изменены.')
     else:
         bot.reply_to(message, 'К сожалению у вас нет прав для использования данной команды.')
+
+
+@bot.message_handler(commands=['admin_examples'])
+def mute_user(message):
+    chat_id = message.chat.id
+    user_id = message.from_user.id
+    user_status = bot.get_chat_member(chat_id, user_id).status
+    if user_status == 'administrator' or user_status == 'creator':
+        bot.send_message(user_id, '')
+        bot.reply_to(message, f'Примеры использования команд были отправлены вам в личные сообщения.')
+    else:
+        bot.reply_to(message, 'Команда доступна только для персонала группы.')
+
 
 @bot.message_handler(content_types=['new_chat_members'])
 def greeting(message):
@@ -75,11 +89,9 @@ def start(message):
     button1 = types.InlineKeyboardButton(text='Команды', callback_data='commands')
     button2 = types.InlineKeyboardButton(text='Правила', callback_data='rules')
     markup.add(button1, button2)
-    bot.send_photo(message.chat.id, photo=open(r'Снимок экрана 2024-09-22 235550.png', 'rb'), caption='''Информация обо мне!
-Меня зовут Юмико. Я дочка Лизы и сестра Данфорта. В свободное время отдыхаю, играю в Fortnite и слежу за чатом!
-Для ознакомления с командами и правилами, помогающими следить мне за чатом, вы можете нажать кнопки снизу!
-
-Всех люблю💙''', reply_markup=markup)
+    bot.send_photo(message.chat.id, photo=open(r'Снимок экрана 2024-09-22 235550.png', 'rb'), caption = '''Меня зовут Юмико!
+Я являюсь модератором этого чата!
+Для получения подробносетй нажмите на кнопки снизу!''', reply_markup=markup)
 
 
 
@@ -154,7 +166,7 @@ def unban_user(message):
                     ban_list.remove(message.from_user.id)
                     bans_id_remove(message)
             else:
-                bot.reply_to(message, "У вас нет прав для этой команды.")
+                bot.reply_to(message, "У вас нет прав для использования этой команды.")
         else:
             bot.reply_to(message, f"Котёнок @{message.reply_to_message.from_user.username} не забанен.")
     else:
@@ -163,6 +175,42 @@ def unban_user(message):
 def is_user_admin(chat_id, user_id):
     chat_member = bot.get_chat_member(chat_id, user_id)
     return chat_member.status == "administrator" or chat_member.status == "creator"
+
+
+@bot.message_handler(commands=['ban_user'])
+def ban_user(message):
+    global user_id
+    chat_id = message.chat.id
+    user_id1 = message.from_user.id
+    user_status = bot.get_chat_member(chat_id, user_id1).status
+    if user_status == 'administrator' or user_status == 'creator':
+        try:
+            text_ban = message.text
+            ban_count = text_ban.split(' ')
+            with open('users_id.txt') as file:
+                lines = file.read().splitlines()
+            dic = {}
+            for line in lines:
+                key, value = line.split(': ')
+                dic.update({key: value})
+            user_id_go = dic[ban_count[1] + ' ']
+            user_id = int(user_id_go)
+        except:
+            bot.reply_to(message, '''Пользователя нет в базе.
+Для добавления пользователя в базу используйте 
+команду [/add_user]
+в ответ на сообщение пользователя.''')
+        return
+        try:
+            bot.kick_chat_member(chat_id, user_id)
+            bot.reply_to(message, f"Котёнок {ban_count[1]} был забанен.")
+            ban_list.append(message.from_user.id)
+            bans_id_add(message)
+        except:
+            bot.reply_to(message, f"Котёнок {ban_count[1]} не забанен.")
+    else:
+        bot.reply_to(message, "У вас нет прав для использования этой команды.")
+
 
 
 
@@ -256,54 +304,56 @@ def mute_user(message):
 
 @bot.message_handler(commands=['mute_user'])
 def mute_user(message):
-    text_mute = message.text
-    mute_count = text_mute.split(' ')
-    duration = 60
-    min = duration * 1
-    hour = duration * 60
-    day = duration * 1440
-    week = duration * 10080
-    d = {}
-    with open("users_id.txt") as file:
-        for line in file:
-            key, *value = line.split()
-            d[key] = value
-    start_with_id = str(d[str(mute_count[1])])
-    don_user_id = str(start_with_id[2] + start_with_id[3:])
-    result_user_id = int(don_user_id[:9])
-    user_id = GenericAlias(list, (int, result_user_id))
-    try:
-        if mute_count[3] == 'min':
-            bot.restrict_chat_member(message.chat.id, user_id, until_date=time.time() + min * int(mute_count[2]))
-            print(type(dict[mute_count[1]]))
-            bot.reply_to(message,f"Котёнок {dict[mute_count[1]]} замучен на {mute_count[2]} минут.")
-            mute_list.append(dict[mute_count[2]])
-        else:
-            bot.reply_to(message.chat.id, result_user_id)
-    except:
-        bot.reply_to(message.chat.id, str(user_id))
+    global user_id
+    chat_id1 = message.chat.id
+    user_id1 = message.from_user.id
+    user_status = bot.get_chat_member(chat_id1, user_id1).status
+    if user_status == 'administrator' or user_status == 'creator':
+        text_mute = message.text
+        mute_count = text_mute.split(' ')
+        duration = 60
+        min = duration * 1
+        hour = duration * 60
+        day = duration * 1440
+        week = duration * 10080
+        try:
+            with open('users_id.txt') as file:
+                lines = file.read().splitlines()
+            dic = {}
+            for line in lines:
+                key, value = line.split(': ')
+                dic.update({key: value})
+            user_id_go = dic[mute_count[1] + ' ']
+            user_id = int(user_id_go)
+        except:
+            bot.reply_to(message, '''Пользователя нет в базе.
+Для добавления пользователя в базу используйте 
+команду [/add_user]
+в ответ на сообщение пользователя.''')
+        try:
+            if mute_count[3] == 'min':
+                bot.restrict_chat_member(message.chat.id, user_id, until_date=time.time() + min * int(mute_count[2]))
+                bot.reply_to(message,f"Котёнок {mute_count[1]} замучен на {mute_count[2]} минут.")
+                mute_list.append(mute_count[1])
+            elif mute_count[3] == 'hour':
+                bot.restrict_chat_member(message.chat.id, user_id, until_date=time.time() + hour * int(mute_count[2]))
+                bot.reply_to(message,f"Котёнок {mute_count[1]} замучен на {mute_count[2]} минут.")
+                mute_list.append(mute_count[1])
+            elif mute_count[3] == 'day':
+                bot.restrict_chat_member(message.chat.id, user_id, until_date=time.time() + day * int(mute_count[2]))
+                bot.reply_to(message,f"Котёнок {mute_count[1]} замучен на {mute_count[2]} минут.")
+                mute_list.append(mute_count[1])
+            elif mute_count[3] == 'week':
+                bot.restrict_chat_member(message.chat.id, user_id, until_date=time.time() + week * int(mute_count[2]))
+                bot.reply_to(message,f"Котёнок {mute_count[1]} замучен на {mute_count[2]} минут.")
+                mute_list.append(mute_count[1])
+        except:
+            bot.reply_to(message, '''Котёнок является частью персонала группы или время указанно некорректно.
+Для получения примеров использования команд используйте [/admin_examples]''')
+    else:
+        bot.reply_to(message, "У вас нет прав для использования данной команды.")
 
 
-@bot.message_handler(commands=['ban_user'])
-def ban_user(message):
-    text_ban = message.text
-    ban_count = text_ban.split(' ')
-    d = {}
-    with open("users_id.txt") as file:
-        for line in file:
-            key, *value = line.split()
-            d[key] = value
-    start_with_id = str(d[str(ban_count[1])])
-    don_user_id = str(start_with_id[2] + start_with_id[3:])
-    result_user_id = int(don_user_id[:9])
-    user_id = GenericAlias(list, (int, result_user_id))
-    try:
-        bot.kick_chat_member(message.chat.id, user_id)
-                bot.reply_to(message, f"Котёнок {ban_count[1]} был забанен.")
-                ban_list.append(user_id)
-                bans_id_add(message)
-    except:
-        bot.reply_to(message.chat.id, str(user_id))
 
 
 @bot.message_handler(commands=['mute_list'])
@@ -411,7 +461,7 @@ def users_id_add(message):
     with open('bans.txt', 'r') as original:
         data = original.read()
     with open('bans.txt', 'w') as modified:
-        modified.write(user_id + '\n' + data)
+        modified.write('@' + message.reply_to_message.from_user.username + ' : '+ user_id + '\n' + data)
 
 
 if __name__ == '__main__':
