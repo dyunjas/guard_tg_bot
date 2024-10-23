@@ -1,17 +1,96 @@
 import telebot
+from aiogram.types import chat
 from telebot import types
 import time
-from types import GenericAlias
 
 
 TOKEN = "7379713109:AAHMSMSc_aUT7lhPvx2H7eMB_S0z5F6XIrs"
 bot = telebot.TeleBot(TOKEN)
 
-
 mute_list = []
 ban_list = []
 counter = {}
 user_dic = {}
+
+
+@bot.message_handler(commands=['get_key'])
+def start(message):
+    try:
+        with open(r"admin_key.txt", 'r') as fp:
+            for count, line in enumerate(fp):
+                pass
+        f = open('admin_key.txt', 'r', encoding='utf-8')
+        key_content = f.read()
+        bot.reply_to(message, key_content + '\n' + f'Кол-во ключей: {count}')
+        f.close()
+    except:
+        bot.reply_to(message, 'Ключей нет.')
+
+
+@bot.message_handler(commands=['add_key'])
+def start(message):
+    user_id = message.from_user.id
+    chatik = message.chat.type
+    if user_id == 1237947229:
+        if chatik == 'private':
+            text = message.text
+            with open('admin_key.txt', 'r', encoding='utf-8') as original:
+                data = original.read()
+            with open('admin_key.txt', 'w', encoding='utf-8') as modified:
+                modified.write(text + '\n' + data)
+            with open("admin_key.txt", "r", encoding='utf-8') as f:
+                data = f.readlines()
+            with open("admin_key.txt", "w", encoding='utf-8') as f:
+                for line in data:
+                    if line.strip() != '/add_key':
+                        f.write(line)
+            with open(r"admin_key.txt", 'r') as fp:
+                for count, line in enumerate(fp):
+                    pass
+            bot.reply_to(message, f'''Ключи успешно добавлены.
+Кол-во ключей: {count}''')
+        elif chatik != 'private':
+            bot.reply_to(message, 'Команда не может быть использована в этом чате.')
+    elif user_id != 1237947229:
+        bot.reply_to(message, 'У вас нет прав для использования данной команды.')
+
+
+
+
+@bot.message_handler(commands=['use_key'])
+def start(message):
+    user_id1 = message.from_user.id
+    chatik = message.chat.type
+    text_mute = message.text
+    key_count = text_mute.split(' ')
+    if chatik == 'private':
+        with open(r'admin_key.txt', 'r', encoding='utf-8') as file:
+            content2 = file.read()
+            if key_count[1] in content2:
+                with open(r'admins_key.txt', 'r', encoding='utf-8') as file:
+                    content = file.read()
+                    if str(user_id1) not in content:
+                        key_from_admin = key_count[1]
+                        with open(r'admin_key.txt', 'r', encoding='utf-8') as file:
+                            content = file.read()
+                            if key_from_admin in content:
+                                with open("admin_key.txt", "r", encoding='utf-8') as f:
+                                    data = f.readlines()
+                                with open("admin_key.txt", "w", encoding='utf-8') as f:
+                                    for line in data:
+                                        if line.strip() != key_count[1]:
+                                            f.write(line)
+                                with open('admins_key.txt', 'r', encoding='utf-8') as original:
+                                    data = original.read()
+                                with open('admins_key.txt', 'w', encoding='utf-8') as modified:
+                                    modified.write(str(user_id1) + '\n' + data)
+                                bot.reply_to(message, f'Ключ успешно активирован. Роль администратора выдана на аккаунт [{user_id1}].')
+                    elif str(user_id1) in content:
+                        bot.reply_to(message, 'Ключ уже использован на этом аккаунте.')
+            elif key_count[1] not in content2:
+                bot.reply_to(message, 'Ключа не существует или он уже был использован.')
+    else:
+        bot.reply_to(message, 'Команда не может быть использована в этом чате.')
 
 
 @bot.message_handler(commands=['set_rules'])
@@ -72,14 +151,19 @@ def mute_user(message):
 def start(message):
     if message.reply_to_message:
         chat_id = message.chat.id
-        user_id = message.from_user.id
-        with open('users.txt', 'r') as original:
-            data = original.read()
-        with open('users.txt', 'w') as modified:
-            modified.write('@' + message.reply_to_message.from_user.username + ' : '+ str(user_id) + '\n' + data)
-        
-    
-
+        user_id = message.reply_to_message.from_user.id
+        with open(r'users_id.txt', 'r') as file:
+            content = file.read()
+            print('@' + message.reply_to_message.from_user.username + ' : ' + str(user_id))
+            print(content)
+            if '@' + message.reply_to_message.from_user.username + ' : ' + str(user_id) not in content:
+                    with open('users_id.txt', 'r') as original:
+                        data = original.read()
+                    with open('users_id.txt', 'w') as modified:
+                        modified.write('@' + message.reply_to_message.from_user.username + ' : ' + str(user_id) + '\n' + data)
+                    bot.reply_to(message, f'Котёнок @{message.reply_to_message.from_user.username} добавлен в базу.')
+            else:
+                bot.reply_to(message, f'Котёнок @{message.reply_to_message.from_user.username} уже находится в базе.')
 
 @bot.message_handler(content_types=['new_chat_members'])
 def greeting(message):
@@ -90,10 +174,10 @@ def greeting(message):
 def start(message):
     markup = types.InlineKeyboardMarkup(row_width=1)
     button1 = types.InlineKeyboardButton(text='Twitch', url='https://www.twitch.tv/etoshanty', callback_data='twitch')
-    button2 = types.InlineKeyboardButton(text='Telegram', url='https://t.me/etoshanty',  callback_data='tg')
-    button3 = types.InlineKeyboardButton(text='Etoshanty Shop', url='https://t.me/etoshanty_shop_bot', callback_data='shop')
+    button2 = types.InlineKeyboardButton(text='Telegram', url='https://t.me/etoshanty', callback_data='tg')
+    button3 = types.InlineKeyboardButton(text='Etoshanty Shop', url='https://t.me/etoshanty_shop_bot',callback_data='shop')
     markup.add(button1, button2, button3)
-    bot.send_photo(message.chat.id, photo=open(r'photo_2024-09-23_23-31-28.jpg', 'rb'), caption='''Где меня найти?️''', reply_markup=markup)
+    bot.send_photo(message.chat.id, photo=open(r'photo_2024-09-23_23-31-28.jpg', 'rb'), caption='''Где меня найти?️''',reply_markup=markup)
 
 
 @bot.message_handler(commands=['info'])
@@ -102,16 +186,14 @@ def start(message):
     button1 = types.InlineKeyboardButton(text='Команды', callback_data='commands')
     button2 = types.InlineKeyboardButton(text='Правила', callback_data='rules')
     markup.add(button1, button2)
-    bot.send_photo(message.chat.id, photo=open(r'Снимок экрана 2024-09-22 235550.png', 'rb'), caption = '''Меня зовут Юмико!
+    bot.send_photo(message.chat.id, photo=open(r'Снимок экрана 2024-09-22 235550.png', 'rb'), caption='''Меня зовут Юмико!
 Я являюсь модератором этого чата!
 Для получения подробносетй нажмите на кнопки снизу!''', reply_markup=markup)
-
 
 
 @bot.message_handler(commands=['rules'])
 def start(message):
     send_rules(message)
-
 
 
 @bot.message_handler(commands=['commands'])
@@ -121,7 +203,7 @@ def start(message):
 
 @bot.callback_query_handler(func=lambda call: call.data == 'commands')
 def like2_handler(call):
-    bot.send_message(call.message.chat.id,'''Основные команды чата:
+    bot.send_message(call.message.chat.id, '''Основные команды чата:
 • /info - информация обо мне
 • /shanty - где найти shanty?
 • /commands - команды
@@ -139,28 +221,33 @@ def like111_handler(call):
     send_rules(call.message)
 
 
-
 @bot.message_handler(commands=['ban'])
 def ban_user(message):
+    with open('admins_key.txt') as f:
+        lines = f.readlines()
+        admins_key = [line.strip() for line in lines]
     chat_id = message.chat.id
     user_id = message.from_user.id
     user_status = bot.get_chat_member(chat_id, user_id).status
-    if user_status == 'administrator' or user_status == 'creator':
+    if user_status == 'administrator' or user_status == 'creator' or str(user_id) in admins_key:
         if message.reply_to_message:
             chat_id = message.chat.id
             user_id = message.reply_to_message.from_user.id
             user_status = bot.get_chat_member(chat_id, user_id).status
             if user_status == 'administrator' or user_status == 'creator':
-                bot.reply_to(message, f"К сожалению котёнок @{message.reply_to_message.from_user.username} является частью персонала группы.")
+                bot.reply_to(message,
+                             f"К сожалению котёнок @{message.reply_to_message.from_user.username} является частью персонала группы.")
             else:
                 bot.kick_chat_member(chat_id, user_id)
                 bot.reply_to(message, f"Котёнок @{message.reply_to_message.from_user.username} был забанен.")
                 ban_list.append(message.from_user.id)
                 bans_id_add(message)
         else:
-            bot.reply_to(message,"Эта команда должна быть использована в ответ на сообщение котёнка, которого вы хотите забанить.")
+            bot.reply_to(message,
+                         "Эта команда должна быть использована в ответ на сообщение котёнка, которого вы хотите забанить.")
     else:
-        bot.reply_to(message,f"К сожалению у вас недостаточно прав, чтобы забанить котёнка @{message.reply_to_message.from_user.username}.")
+        bot.reply_to(message,
+                     f"К сожалению у вас недостаточно прав, чтобы забанить котёнка @{message.reply_to_message.from_user.username}.")
 
 
 @bot.message_handler(commands=['unban'])
@@ -172,7 +259,10 @@ def unban_user(message):
             user_id = message.from_user.id
             if is_user_admin(chat_id, user_id):
                 user_status = bot.get_chat_member(chat_id, user_id).status
-                if user_status != 'administrator' or user_status != 'creator':
+                with open('admins_key.txt') as f:
+                    lines = f.readlines()
+                    admins_key = [line.strip() for line in lines]
+                if user_status == 'administrator' or user_status == 'creator' or str(user_id) in admins_key:
                     user_to_unban = message.reply_to_message.from_user.id
                     bot.unban_chat_member(chat_id, user_to_unban)
                     bot.reply_to(message, f"Котёнок @{message.reply_to_message.from_user.username} разбанен.")
@@ -183,11 +273,14 @@ def unban_user(message):
         else:
             bot.reply_to(message, f"Котёнок @{message.reply_to_message.from_user.username} не забанен.")
     else:
-            bot.reply_to(message, "Эта команда должна быть использована в ответ на сообщение котёнка, которого вы хотите разбанить.")
+        bot.reply_to(message,
+                     "Эта команда должна быть использована в ответ на сообщение котёнка, которого вы хотите разбанить.")
+
 
 def is_user_admin(chat_id, user_id):
     chat_member = bot.get_chat_member(chat_id, user_id)
     return chat_member.status == "administrator" or chat_member.status == "creator"
+
 
 @bot.message_handler(commands=['unban_user'])
 def unban_user(message):
@@ -195,7 +288,10 @@ def unban_user(message):
     chat_id = message.chat.id
     user_id1 = message.from_user.id
     user_status = bot.get_chat_member(chat_id, user_id1).status
-    if user_status == 'administrator' or user_status == 'creator':
+    with open('admins_key.txt') as f:
+        lines = f.readlines()
+        admins_key = [line.strip() for line in lines]
+    if user_status == 'administrator' or user_status == 'creator' or str(user_id) in admins_key:
         try:
             text_ban = message.text
             unban_count = text_ban.split(' ')
@@ -219,7 +315,6 @@ def unban_user(message):
                 user_id = ''
             except:
                 bot.reply_to(message, 'Котёнок не забанен.')
-        
 
 
 @bot.message_handler(commands=['ban_user'])
@@ -228,7 +323,10 @@ def ban_user(message):
     chat_id = message.chat.id
     user_id1 = message.from_user.id
     user_status = bot.get_chat_member(chat_id, user_id1).status
-    if user_status == 'administrator' or user_status == 'creator':
+    with open('admins_key.txt') as f:
+        lines = f.readlines()
+        admins_key = [line.strip() for line in lines]
+    if user_status == 'administrator' or user_status == 'creator' or str(user_id) in admins_key:
         try:
             text_ban = message.text
             ban_count = text_ban.split(' ')
@@ -246,7 +344,7 @@ def ban_user(message):
 команду [/add_user]
 в ответ на сообщение пользователя.''')
             user_id = ''
-        return
+            return
         try:
             bot.kick_chat_member(chat_id, user_id)
             bot.reply_to(message, f"Котёнок {ban_count[1]} был забанен.")
@@ -260,8 +358,6 @@ def ban_user(message):
         bot.reply_to(message, "У вас нет прав для использования этой команды.")
 
 
-
-
 @bot.message_handler(commands=['unmute'])
 def unmute_user(message):
     user_id = message.from_user.id
@@ -269,24 +365,29 @@ def unmute_user(message):
         chat_id = message.chat.id
         user_id = message.from_user.id
         user_status = bot.get_chat_member(chat_id, user_id).status
-        if user_status == 'administrator' or user_status == 'creator':
+        with open('admins_key.txt') as f:
+            lines = f.readlines()
+            admins_key = [line.strip() for line in lines]
+        if user_status == 'administrator' or user_status == 'creator' or str(user_id) in admins_key:
             if message.reply_to_message:
                 chat_id = message.chat.id
                 user_id = message.reply_to_message.from_user.id
                 user_status = bot.get_chat_member(chat_id, user_id).status
                 if user_status == 'administrator' or user_status == 'creator':
-                    bot.reply_to(message,f"К сожалению котёнок @{message.reply_to_message.from_user.username} является частью персонала группы.")
+                    bot.reply_to(message,
+                                 f"К сожалению котёнок @{message.reply_to_message.from_user.username} является частью персонала группы.")
                 else:
                     chat_id = message.chat.id
                     user_id = message.reply_to_message.from_user.id
-                    bot.restrict_chat_member(chat_id, user_id, can_send_messages=True, can_send_media_messages=True, can_send_other_messages=True, can_add_web_page_previews=True)
+                    bot.restrict_chat_member(chat_id, user_id, can_send_messages=True, can_send_media_messages=True,can_send_other_messages=True, can_add_web_page_previews=True)
                     bot.reply_to(message, f"Котёнок @{message.reply_to_message.from_user.username} размучен.")
                     mute_list.remove(message.from_user.id)
                     mutes_id_remove(message)
             else:
-                bot.reply_to(message, "Эта команда должна быть использована в ответ на сообщение котёнка, которого вы хотите размутить.")
+                bot.reply_to(message,
+                             "Эта команда должна быть использована в ответ на сообщение котёнка, которого вы хотите размутить.")
         else:
-            bot.reply_to(message,"У вас нет прав для данной команды.")
+            bot.reply_to(message, "У вас нет прав для данной команды.")
     else:
         bot.reply_to(message, 'Котёнок не замучен.')
 
@@ -298,53 +399,58 @@ def mute_user(message):
         chat_id = message.chat.id
         user_id = message.from_user.id
         user_status = bot.get_chat_member(chat_id, user_id).status
-        if user_status == 'administrator' or user_status == 'creator':
+        with open('admins_key.txt') as f:
+            lines = f.readlines()
+            admins_key = [line.strip() for line in lines]
+        if user_status == 'administrator' or user_status == 'creator' or str(user_id) in admins_key:
             if message.reply_to_message:
                 chat_id = message.chat.id
                 user_id = message.reply_to_message.from_user.id
                 user_status = bot.get_chat_member(chat_id, user_id).status
                 if user_status == 'administrator' or user_status == 'creator':
-                    bot.reply_to(message,f"К сожалению котёнок @{message.reply_to_message.from_user.username} является частью персонала группы.")
+                    bot.reply_to(message,
+                                 f"К сожалению котёнок @{message.reply_to_message.from_user.username} является частью персонала группы.")
                 else:
                     text_mute = message.text
                     mute_count = text_mute.split(' ')
-                    user_id = message.reply_to_message.from_user.id
-                    duration = 60
-                    min = duration * 1
-                    hour = duration * 60
-                    day = duration * 1440
-                    week = duration * 10080
                     if mute_count:
                         if int(mute_count[1]) < 1:
                             bot.reply_to(message, "Время должно быть положительным числом.")
                             return
                         try:
+                            duration = 60
+                            min = duration * 1
+                            hour = duration * 60
+                            day = duration * 1440
+                            week = duration * 10080
+                            user_id = message.reply_to_message.from_user.id
                             if mute_count[2] == 'min':
-                                bot.restrict_chat_member(chat_id, user_id, until_date=time.time() + min * int(mute_count[1]))
-                                bot.reply_to(message, f"Котёнок @{message.reply_to_message.from_user.username} замучен на {mute_count[1]} минут.")
+                                bot.restrict_chat_member(chat_id, user_id,until_date=time.time() + min * int(mute_count[1]))
+                                bot.reply_to(message,f"Котёнок @{message.reply_to_message.from_user.username} замучен на {mute_count[1]} минут.")
                                 mutes_id_add(message)
                                 mute_list.append(message.from_user.id)
                             elif mute_count[2] == 'hour':
-                                bot.restrict_chat_member(chat_id, user_id, until_date=time.time() + hour * int(mute_count[1]))
-                                bot.reply_to(message, f"Котёнок @{message.reply_to_message.from_user.username} замучен на {mute_count[1]} часов.")
+                                bot.restrict_chat_member(chat_id, user_id,until_date=time.time() + hour * int(mute_count[1]))
+                                bot.reply_to(message,f"Котёнок @{message.reply_to_message.from_user.username} замучен на {mute_count[1]} часов.")
                                 mutes_id_add(message)
                                 mute_list.append(message.from_user.id)
                             elif mute_count[2] == 'day':
-                                bot.restrict_chat_member(chat_id, user_id, until_date=time.time() + day * int(mute_count[1]))
-                                bot.reply_to(message, f"Котёнок @{message.reply_to_message.from_user.username} замучен на {mute_count[1]} дней.")
+                                bot.restrict_chat_member(chat_id, user_id,until_date=time.time() + day * int(mute_count[1]))
+                                bot.reply_to(message,f"Котёнок @{message.reply_to_message.from_user.username} замучен на {mute_count[1]} дней.")
                                 mutes_id_add(message)
                                 mute_list.append(message.from_user.id)
                             elif mute_count[2] == 'week':
-                                bot.restrict_chat_member(chat_id, user_id, until_date=time.time() + week * int(mute_count[1]))
-                                bot.reply_to(message, f"Котёнок @{message.reply_to_message.from_user.username} замучен на {mute_count[1]} недель.")
+                                bot.restrict_chat_member(chat_id, user_id,until_date=time.time() + week * int(mute_count[1]))
+                                bot.reply_to(message,f"Котёнок @{message.reply_to_message.from_user.username} замучен на {mute_count[1]} недель.")
                                 mutes_id_add(message)
                                 mute_list.append(message.from_user.id)
                         except:
                             bot.reply_to(message, "Время указано некоректно.")
             else:
-                bot.reply_to(message, "Эта команда должна быть использована в ответ на сообщение котёнка, которого вы хотите замутить.")
+                bot.reply_to(message,
+                             "Эта команда должна быть использована в ответ на сообщение котёнка, которого вы хотите замутить.")
         else:
-            bot.reply_to(message,"У вас нет прав для использования данной команды.")
+            bot.reply_to(message, "У вас нет прав для использования данной команды.")
     elif user_id in mute_list:
         mute_list.remove(message.from_user.id)
         bot.reply_to(message, 'Произошла ошибка, попробуйте ещё раз.')
@@ -366,14 +472,12 @@ def mute_user(message):
     chat_id1 = message.chat.id
     user_id1 = message.from_user.id
     user_status = bot.get_chat_member(chat_id1, user_id1).status
-    if user_status == 'administrator' or user_status == 'creator':
+    with open('admins_key.txt') as f:
+        lines = f.readlines()
+        admins_key = [line.strip() for line in lines]
+    if user_status == 'administrator' or user_status == 'creator' or str(user_id) in admins_key:
         text_mute = message.text
         mute_count = text_mute.split(' ')
-        duration = 60
-        min = duration * 1
-        hour = duration * 60
-        day = duration * 1440
-        week = duration * 10080
         try:
             with open('users_id.txt') as file:
                 lines = file.read().splitlines()
@@ -389,26 +493,35 @@ def mute_user(message):
 команду [/add_user]
 в ответ на сообщение пользователя.''')
             user_id = ''
-        return
+            return
         try:
+            duration = 60
             if mute_count[3] == 'min':
+                min = duration * 1
                 bot.restrict_chat_member(message.chat.id, user_id, until_date=time.time() + min * int(mute_count[2]))
-                bot.reply_to(message,f"Котёнок {mute_count[1]} замучен на {mute_count[2]} минут.")
+                bot.reply_to(message, f"Котёнок {mute_count[1]} замучен на {mute_count[2]} минут.")
                 mute_list.append(mute_count[1])
+                with open('mutes.txt', 'r') as original:
+                    data = original.read()
+                with open('mutes.txt', 'w') as modified:
+                    modified.write('@' + mute_count[1] + ' : ' + str(user_id) +  '\n' + data)
                 user_id = ''
             elif mute_count[3] == 'hour':
+                hour = duration * 60
                 bot.restrict_chat_member(message.chat.id, user_id, until_date=time.time() + hour * int(mute_count[2]))
-                bot.reply_to(message,f"Котёнок {mute_count[1]} замучен на {mute_count[2]} минут.")
+                bot.reply_to(message, f"Котёнок {mute_count[1]} замучен на {mute_count[2]} минут.")
                 mute_list.append(mute_count[1])
                 user_id = ''
             elif mute_count[3] == 'day':
+                day = duration * 1440
                 bot.restrict_chat_member(message.chat.id, user_id, until_date=time.time() + day * int(mute_count[2]))
-                bot.reply_to(message,f"Котёнок {mute_count[1]} замучен на {mute_count[2]} минут.")
+                bot.reply_to(message, f"Котёнок {mute_count[1]} замучен на {mute_count[2]} минут.")
                 mute_list.append(mute_count[1])
                 user_id = ''
             elif mute_count[3] == 'week':
+                week = duration * 10080
                 bot.restrict_chat_member(message.chat.id, user_id, until_date=time.time() + week * int(mute_count[2]))
-                bot.reply_to(message,f"Котёнок {mute_count[1]} замучен на {mute_count[2]} минут.")
+                bot.reply_to(message, f"Котёнок {mute_count[1]} замучен на {mute_count[2]} минут.")
                 mute_list.append(mute_count[1])
                 user_id = ''
         except:
@@ -417,8 +530,6 @@ def mute_user(message):
             user_id = ''
     else:
         bot.reply_to(message, "У вас нет прав для использования данной команды.")
-
-
 
 
 @bot.message_handler(commands=['mute_list'])
@@ -446,10 +557,6 @@ def delete_message(message):
         mutes_id_add(message)
     elif user_status == 'administrator' or user_status == 'creator':
         bot.send_message(message.chat.id, '')
-
-
-
-
 
 
 def mutes_id_add(message):
@@ -497,6 +604,7 @@ def send_rules(message):
     except:
         bot.reply_to(message, 'Котёнок, правила для этого чата ещё не установлены.')
 
+
 def send_commands(message):
     bot.send_message(message.chat.id, '''Основные команды чата:
     • /info - информация обо мне
@@ -509,6 +617,7 @@ def send_commands(message):
     • /unmute - рузмутить котёнка
     • /ban - заблокировать котёнка
     • /unban - разблокировать котёнка''')
+
 
 def file_to_dict():
     file = open("users_id.txt")
@@ -526,11 +635,11 @@ def users_id_add(message):
     with open('bans.txt', 'r') as original:
         data = original.read()
     with open('bans.txt', 'w') as modified:
-        modified.write('@' + message.reply_to_message.from_user.username + ' : '+ user_id + '\n' + data)
+        modified.write('@' + message.reply_to_message.from_user.username + ' : ' + user_id + '\n' + data)
+
 
 
 if __name__ == '__main__':
     bot.polling(none_stop=True)
-
 
 
