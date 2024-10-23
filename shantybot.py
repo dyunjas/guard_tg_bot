@@ -212,9 +212,11 @@ def unban_user(message):
 Для добавления пользователя в базу используйте 
 команду [/add_user]
 в ответ на сообщение пользователя.''')
+            user_id = ''
             try:
                 bot.unban_chat_member(chat_id, user_id)
                 bot.reply_to(message, f"Котёнок {unban_count[1]} разбанен.")
+                user_id = ''
             except:
                 bot.reply_to(message, 'Котёнок не забанен.')
         
@@ -243,14 +245,17 @@ def ban_user(message):
 Для добавления пользователя в базу используйте 
 команду [/add_user]
 в ответ на сообщение пользователя.''')
+            user_id = ''
         return
         try:
             bot.kick_chat_member(chat_id, user_id)
             bot.reply_to(message, f"Котёнок {ban_count[1]} был забанен.")
             ban_list.append(message.from_user.id)
             bans_id_add(message)
+            user_id = ''
         except:
             bot.reply_to(message, f"Котёнок {ban_count[1]} не забанен.")
+            user_id = ''
     else:
         bot.reply_to(message, "У вас нет прав для использования этой команды.")
 
@@ -383,27 +388,33 @@ def mute_user(message):
 Для добавления пользователя в базу используйте 
 команду [/add_user]
 в ответ на сообщение пользователя.''')
+            user_id = ''
         return
         try:
             if mute_count[3] == 'min':
                 bot.restrict_chat_member(message.chat.id, user_id, until_date=time.time() + min * int(mute_count[2]))
                 bot.reply_to(message,f"Котёнок {mute_count[1]} замучен на {mute_count[2]} минут.")
                 mute_list.append(mute_count[1])
+                user_id = ''
             elif mute_count[3] == 'hour':
                 bot.restrict_chat_member(message.chat.id, user_id, until_date=time.time() + hour * int(mute_count[2]))
                 bot.reply_to(message,f"Котёнок {mute_count[1]} замучен на {mute_count[2]} минут.")
                 mute_list.append(mute_count[1])
+                user_id = ''
             elif mute_count[3] == 'day':
                 bot.restrict_chat_member(message.chat.id, user_id, until_date=time.time() + day * int(mute_count[2]))
                 bot.reply_to(message,f"Котёнок {mute_count[1]} замучен на {mute_count[2]} минут.")
                 mute_list.append(mute_count[1])
+                user_id = ''
             elif mute_count[3] == 'week':
                 bot.restrict_chat_member(message.chat.id, user_id, until_date=time.time() + week * int(mute_count[2]))
                 bot.reply_to(message,f"Котёнок {mute_count[1]} замучен на {mute_count[2]} минут.")
                 mute_list.append(mute_count[1])
+                user_id = ''
         except:
             bot.reply_to(message, '''Котёнок является частью персонала группы или время указанно некорректно.
 Для получения примеров использования команд используйте [/admin_examples]''')
+            user_id = ''
     else:
         bot.reply_to(message, "У вас нет прав для использования данной команды.")
 
