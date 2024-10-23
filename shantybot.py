@@ -51,7 +51,7 @@ def start(message):
             for line in data:
                 if line.strip() != '/edit_rules':
                     f.write(line)
-                    bot.send_message(message.chat.id, 'Правила чата изменены.')
+        bot.send_message(message.chat.id, 'Правила чата изменены.')
     else:
         bot.reply_to(message, 'К сожалению у вас нет прав для использования данной команды.')
 
@@ -66,6 +66,19 @@ def mute_user(message):
         bot.reply_to(message, f'Примеры использования команд были отправлены вам в личные сообщения.')
     else:
         bot.reply_to(message, 'Команда доступна только для персонала группы.')
+
+
+@bot.message_handler(commands=['add_user'])
+def start(message):
+    if message.reply_to_message:
+        chat_id = message.chat.id
+        user_id = message.from_user.id
+        with open('users.txt', 'r') as original:
+            data = original.read()
+        with open('users.txt', 'w') as modified:
+            modified.write('@' + message.reply_to_message.from_user.username + ' : '+ user_id + '\n' + data)
+        
+    
 
 
 @bot.message_handler(content_types=['new_chat_members'])
