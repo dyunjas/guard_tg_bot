@@ -76,7 +76,7 @@ def start(message):
         with open('users.txt', 'r') as original:
             data = original.read()
         with open('users.txt', 'w') as modified:
-            modified.write('@' + message.reply_to_message.from_user.username + ' : '+ user_id + '\n' + data)
+            modified.write('@' + message.reply_to_message.from_user.username + ' : '+ str(user_id) + '\n' + data)
         
     
 
@@ -188,6 +188,36 @@ def unban_user(message):
 def is_user_admin(chat_id, user_id):
     chat_member = bot.get_chat_member(chat_id, user_id)
     return chat_member.status == "administrator" or chat_member.status == "creator"
+
+@bot.message_handler(commands=['unban_user'])
+def unban_user(message):
+    global user_id
+    chat_id = message.chat.id
+    user_id1 = message.from_user.id
+    user_status = bot.get_chat_member(chat_id, user_id1).status
+    if user_status == 'administrator' or user_status == 'creator':
+        try:
+            text_ban = message.text
+            unban_count = text_ban.split(' ')
+            with open('users_id.txt') as file:
+                lines = file.read().splitlines()
+            dic = {}
+            for line in lines:
+                key, value = line.split(': ')
+                dic.update({key: value})
+            user_id_go = dic[unban_count[1] + ' ']
+            user_id = int(user_id_go)
+        except:
+            bot.reply_to(message, '''Пользователя нет в базе.
+Для добавления пользователя в базу используйте 
+команду [/add_user]
+в ответ на сообщение пользователя.''')
+            try:
+                bot.unban_chat_member(chat_id, user_id)
+                bot.reply_to(message, f"Котёнок {unban_count[1]} разбанен.")
+            except:
+                bot.reply_to(message, 'Котёнок не забанен.')
+        
 
 
 @bot.message_handler(commands=['ban_user'])
@@ -315,6 +345,16 @@ def mute_user(message):
         bot.reply_to(message, 'Произошла ошибка, попробуйте ещё раз.')
 
 
+# @bot.message_handler(commands=['unmute_user'])
+# def unban_user(message):
+#     global user_id
+#     chat_id = message.chat.id
+#     user_id1 = message.from_user.id
+#     user_status = bot.get_chat_member(chat_id, user_id1).status
+#     if user_status == 'administrator' or user_status == 'creator':
+#         g
+
+
 @bot.message_handler(commands=['mute_user'])
 def mute_user(message):
     global user_id
@@ -343,6 +383,7 @@ def mute_user(message):
 Для добавления пользователя в базу используйте 
 команду [/add_user]
 в ответ на сообщение пользователя.''')
+        return
         try:
             if mute_count[3] == 'min':
                 bot.restrict_chat_member(message.chat.id, user_id, until_date=time.time() + min * int(mute_count[2]))
