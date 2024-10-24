@@ -15,16 +15,24 @@ user_dic = {}
 
 @bot.message_handler(commands=['get_key'])
 def start(message):
-    try:
-        with open(r"admin_key.txt", 'r') as fp:
-            for count, line in enumerate(fp):
-                pass
-        f = open('admin_key.txt', 'r', encoding='utf-8')
-        key_content = f.read()
-        bot.reply_to(message, key_content + '\n' + f'Кол-во ключей: {count}')
-        f.close()
-    except:
-        bot.reply_to(message, 'Ключей нет.')
+    user_id = message.from_user.id
+    chatik = message.chat.type
+    if user_id == 1237947229:
+        if chatik == 'private':
+            try:
+                with open(r"admin_key.txt", 'r') as fp:
+                    for count, line in enumerate(fp):
+                        pass
+                f = open('admin_key.txt', 'r', encoding='utf-8')
+                key_content = f.read()
+                bot.reply_to(message, key_content + '\n' + f'Кол-во ключей: {count}')
+                f.close()
+            except:
+                bot.reply_to(message, 'Ключей нет.')
+        elif chatik != 'private':
+            bot.reply_to(message, 'Команда не может быть использована в этом чате.')
+    elif user_id != 1237947229:
+        bot.reply_to(message, 'У вас нет прав для использования данной команды.')
 
 
 @bot.message_handler(commands=['add_key'])
@@ -63,34 +71,38 @@ def start(message):
     chatik = message.chat.type
     text_mute = message.text
     key_count = text_mute.split(' ')
-    if chatik == 'private':
-        with open(r'admin_key.txt', 'r', encoding='utf-8') as file:
-            content2 = file.read()
-            if key_count[1] in content2:
-                with open(r'admins_key.txt', 'r', encoding='utf-8') as file:
-                    content = file.read()
-                    if str(user_id1) not in content:
-                        key_from_admin = key_count[1]
-                        with open(r'admin_key.txt', 'r', encoding='utf-8') as file:
-                            content = file.read()
-                            if key_from_admin in content:
-                                with open("admin_key.txt", "r", encoding='utf-8') as f:
-                                    data = f.readlines()
-                                with open("admin_key.txt", "w", encoding='utf-8') as f:
-                                    for line in data:
-                                        if line.strip() != key_count[1]:
-                                            f.write(line)
-                                with open('admins_key.txt', 'r', encoding='utf-8') as original:
-                                    data = original.read()
-                                with open('admins_key.txt', 'w', encoding='utf-8') as modified:
-                                    modified.write(str(user_id1) + '\n' + data)
-                                bot.reply_to(message, f'Ключ успешно активирован. Роль администратора выдана на аккаунт [{user_id1}].')
-                    elif str(user_id1) in content:
-                        bot.reply_to(message, 'Ключ уже использован на этом аккаунте.')
-            elif key_count[1] not in content2:
-                bot.reply_to(message, 'Ключа не существует или он уже был использован.')
-    else:
-        bot.reply_to(message, 'Команда не может быть использована в этом чате.')
+    try:
+        if chatik == 'private':
+            with open(r'admin_key.txt', 'r', encoding='utf-8') as file:
+                content2 = file.read()
+                if key_count[1] in content2:
+                    with open(r'admins_key.txt', 'r', encoding='utf-8') as file:
+                        content = file.read()
+                        if str(user_id1) not in content:
+                            key_from_admin = key_count[1]
+                            with open(r'admin_key.txt', 'r', encoding='utf-8') as file:
+                                content = file.read()
+                                if key_from_admin in content:
+                                    with open("admin_key.txt", "r", encoding='utf-8') as f:
+                                        data = f.readlines()
+                                    with open("admin_key.txt", "w", encoding='utf-8') as f:
+                                        for line in data:
+                                            if line.strip() != key_count[1]:
+                                                f.write(line)
+                                    with open('admins_key.txt', 'r', encoding='utf-8') as original:
+                                        data = original.read()
+                                    with open('admins_key.txt', 'w', encoding='utf-8') as modified:
+                                        modified.write(str(user_id1) + '\n' + data)
+                                    bot.reply_to(message, f'Ключ успешно активирован. Роль администратора выдана на аккаунт [{user_id1}].')
+                        elif str(user_id1) in content:
+                            bot.reply_to(message, 'Ключ уже использован на этом аккаунте.')
+                elif key_count[1] not in content2:
+                    bot.reply_to(message, 'Ключа не существует или он уже был использован.')
+        else:
+            bot.reply_to(message, 'Команда не может быть использована в этом чате.')
+    except:
+        bot.reply_to(message, '''Произошла ошибка.
+Команда использована не корректно.''')
 
 
 @bot.message_handler(commands=['set_rules'])
@@ -150,7 +162,6 @@ def mute_user(message):
 @bot.message_handler(commands=['add_user'])
 def start(message):
     if message.reply_to_message:
-        chat_id = message.chat.id
         user_id = message.reply_to_message.from_user.id
         with open(r'users_id.txt', 'r') as file:
             content = file.read()
@@ -211,7 +222,7 @@ def like2_handler(call):
 
 Команды для администраторов:
 • /mute - замутить котёнка
-• /unmute - рузмутить котёнка
+• /unmute - размутить котёнка
 • /ban - заблокировать котёнка
 • /unban - разблокировать котёнка''')
 
@@ -253,7 +264,7 @@ def ban_user(message):
 @bot.message_handler(commands=['unban'])
 def unban_user(message):
     if message.reply_to_message:
-        user_id = message.from_user.i
+        user_id = message.from_user.id
         if user_id in ban_list:
             chat_id = message.chat.id
             user_id = message.from_user.id
@@ -273,8 +284,7 @@ def unban_user(message):
         else:
             bot.reply_to(message, f"Котёнок @{message.reply_to_message.from_user.username} не забанен.")
     else:
-        bot.reply_to(message,
-                     "Эта команда должна быть использована в ответ на сообщение котёнка, которого вы хотите разбанить.")
+        bot.reply_to(message,"Эта команда должна быть использована в ответ на сообщение котёнка, которого вы хотите разбанить.")
 
 
 def is_user_admin(chat_id, user_id):
@@ -475,7 +485,7 @@ def mute_user(message):
     with open('admins_key.txt') as f:
         lines = f.readlines()
         admins_key = [line.strip() for line in lines]
-    if user_status == 'administrator' or user_status == 'creator' or str(user_id) in admins_key:
+    if user_status == 'administrator' or user_status == 'creator' or str(user_id1) in admins_key:
         text_mute = message.text
         mute_count = text_mute.split(' ')
         try:
@@ -501,31 +511,91 @@ def mute_user(message):
                 bot.restrict_chat_member(message.chat.id, user_id, until_date=time.time() + min * int(mute_count[2]))
                 bot.reply_to(message, f"Котёнок {mute_count[1]} замучен на {mute_count[2]} минут.")
                 mute_list.append(mute_count[1])
-                with open('mutes.txt', 'r') as original:
+                with open('mute_user.txt', 'r') as original:
                     data = original.read()
-                with open('mutes.txt', 'w') as modified:
-                    modified.write('@' + mute_count[1] + ' : ' + str(user_id) +  '\n' + data)
+                with open('mute_user.txt', 'w') as modified:
+                    modified.write(mute_count[1] + ' : ' + str(user_id) +  '\n' + data)
                 user_id = ''
             elif mute_count[3] == 'hour':
                 hour = duration * 60
                 bot.restrict_chat_member(message.chat.id, user_id, until_date=time.time() + hour * int(mute_count[2]))
                 bot.reply_to(message, f"Котёнок {mute_count[1]} замучен на {mute_count[2]} минут.")
                 mute_list.append(mute_count[1])
+                with open('mute_user.txt', 'r') as original:
+                    data = original.read()
+                with open('mute_user.txt', 'w') as modified:
+                    modified.write(mute_count[1] + ' : ' + str(user_id) +  '\n' + data)
                 user_id = ''
             elif mute_count[3] == 'day':
                 day = duration * 1440
                 bot.restrict_chat_member(message.chat.id, user_id, until_date=time.time() + day * int(mute_count[2]))
                 bot.reply_to(message, f"Котёнок {mute_count[1]} замучен на {mute_count[2]} минут.")
                 mute_list.append(mute_count[1])
+                with open('mute_user.txt', 'r') as original:
+                    data = original.read()
+                with open('mute_user.txt', 'w') as modified:
+                    modified.write(mute_count[1] + ' : ' + str(user_id) +  '\n' + data)
                 user_id = ''
             elif mute_count[3] == 'week':
                 week = duration * 10080
                 bot.restrict_chat_member(message.chat.id, user_id, until_date=time.time() + week * int(mute_count[2]))
                 bot.reply_to(message, f"Котёнок {mute_count[1]} замучен на {mute_count[2]} минут.")
                 mute_list.append(mute_count[1])
+                with open('mute_user.txt', 'r') as original:
+                    data = original.read()
+                with open('mute_user.txt', 'w') as modified:
+                    modified.write(mute_count[1] + ' : ' + str(user_id) +  '\n' + data)
                 user_id = ''
         except:
             bot.reply_to(message, '''Котёнок является частью персонала группы или время указанно некорректно.
+Для получения примеров использования команд используйте [/admin_examples]''')
+            user_id = ''
+    else:
+        bot.reply_to(message, "У вас нет прав для использования данной команды.")
+
+
+@bot.message_handler(commands=['unmute_user'])
+def mute_user(message):
+    global user_id
+    chat_id1 = message.chat.id
+    user_id1 = message.from_user.id
+    user_status = bot.get_chat_member(chat_id1, user_id1).status
+    with open('admins_key.txt') as f:
+        lines = f.readlines()
+        admins_key = [line.strip() for line in lines]
+    if user_status == 'administrator' or user_status == 'creator' or str(user_id1) in admins_key:
+        text_mute = message.text
+        unmute_count = text_mute.split(' ')
+        try:
+            with open('mute_user.txt') as file:
+                lines = file.read().splitlines()
+            dic = {}
+            for line in lines:
+                key, value = line.split(': ')
+                dic.update({key: value})
+            user_id_go = dic[unmute_count[1] + ' ']
+            user_id = int(user_id_go)
+        except:
+            bot.reply_to(message, '''Пользователя нет в базе.
+Для добавления пользователя в базу используйте
+команду [/add_user]
+в ответ на сообщение пользователя.''')
+            user_id = ''
+            return
+        try:
+            with open("mute_user.txt", "r", encoding='utf-8') as f:
+                data = f.readlines()
+            with open("mute_user.txt", "w", encoding='utf-8') as f:
+                for line in data:
+                    if line.strip() != unmute_count[1] + ' : ' + str(user_id):
+                        f.write(line)
+        except:
+            bot.reply_to(message, f'Котёнок {unmute_count[1]} не замучен')
+        try:
+            bot.restrict_chat_member(chat_id1, user_id, can_send_messages=True, can_send_media_messages=True,can_send_other_messages=True, can_add_web_page_previews=True)
+            bot.reply_to(message, f"Котёнок {unmute_count[1]} размучен.")
+        except:
+            bot.reply_to(message, '''Котёнок является частью персонала группы.
 Для получения примеров использования команд используйте [/admin_examples]''')
             user_id = ''
     else:
@@ -549,14 +619,14 @@ def delete_message(message):
     chat_id = message.chat.id
     user_id = message.from_user.id
     user_status = bot.get_chat_member(chat_id, user_id).status
-    if user_status != 'administrator' or user_status != 'creator':
+    print(user_status)
+    if user_status == 'administrator' or user_status == 'creator' or user_id == 1237947229:
+        return
+    else:
         bot.delete_message(message.chat.id, message.message_id)
         bot.restrict_chat_member(chat_id, user_id, until_date=time.time() + 300)
         bot.send_message(message.chat.id, f'Котёнок , ссылки в чате запрещены.')
         mute_list.append(message.from_user.id)
-        mutes_id_add(message)
-    elif user_status == 'administrator' or user_status == 'creator':
-        bot.send_message(message.chat.id, '')
 
 
 def mutes_id_add(message):
@@ -614,7 +684,7 @@ def send_commands(message):
 
 Команды для администраторов:
     • /mute - замутить котёнка
-    • /unmute - рузмутить котёнка
+    • /unmute - размутить котёнка
     • /ban - заблокировать котёнка
     • /unban - разблокировать котёнка''')
 
