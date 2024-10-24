@@ -241,6 +241,13 @@ def ban_user(message):
     user_id = message.from_user.id
     user_status = bot.get_chat_member(chat_id, user_id).status
     if user_status == 'administrator' or user_status == 'creator' or str(user_id) in admins_key:
+        try:
+            with open('bans.txt', 'r') as original:
+                data = original.read()
+            with open('bans.txt', 'w') as modified:
+                modified.write(user_id + '\n' + data)
+        except:
+            bot.reply_to(message, 'Произошла ошибка.')
         if message.reply_to_message:
             chat_id = message.chat.id
             user_id = message.reply_to_message.from_user.id
@@ -464,16 +471,6 @@ def mute_user(message):
     elif user_id in mute_list:
         mute_list.remove(message.from_user.id)
         bot.reply_to(message, 'Произошла ошибка, попробуйте ещё раз.')
-
-
-# @bot.message_handler(commands=['unmute_user'])
-# def unban_user(message):
-#     global user_id
-#     chat_id = message.chat.id
-#     user_id1 = message.from_user.id
-#     user_status = bot.get_chat_member(chat_id, user_id1).status
-#     if user_status == 'administrator' or user_status == 'creator':
-#         g
 
 
 @bot.message_handler(commands=['mute_user'])
